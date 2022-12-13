@@ -1,13 +1,14 @@
 import argparse
 import os
-import ruamel_yaml as yaml
-import language_evaluation
+import ruamel.yaml as yaml
+# import language_evaluation
 import numpy as np
 import random
 import time
 import datetime
 import json
 from pathlib import Path
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -45,7 +46,7 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
     print_freq = 50
     step_size = 100
     warmup_iterations = warmup_steps * step_size
-    for i, (image, caption, object_labels, image_ids, gold_caption) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for i, (image, caption, object_labels, image_ids, gold_caption) in enumerate(tqdm(metric_logger.log_every(data_loader, print_freq, header))):
         image = image.to(device, non_blocking=True)
         if config['prompt'] != "":
             caption = [config['prompt'] + each+config['eos'] for each in caption]
@@ -99,6 +100,7 @@ def train(model, data_loader, optimizer, tokenizer, epoch, warmup_steps, device,
 
 @torch.no_grad()
 def evaluation(model, data_loader, tokenizer, device, config):
+    print("Start evaluation...")
     # test
     model.eval()
 
@@ -110,7 +112,7 @@ def evaluation(model, data_loader, tokenizer, device, config):
 
 
     answer_input = None
-    for n, (image, caption, object_labels, image_ids, gold_caption) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):        
+    for n, (image, caption, object_labels, image_ids, gold_caption) in enumerate(tqdm(data_loader)):
         image = image.to(device,non_blocking=True)             
         caption = [each+config['eos'] for each in caption]
         question_input = [config['bos']+" "+each for each in object_labels]
@@ -171,7 +173,7 @@ def cal_metric(result_file):
     return results
 
 def main(args, config):
-    utils.init_distributed_mode(args)
+    # utils.init_distributed_mode(args)
 
     device = torch.device(args.device)
 
@@ -190,6 +192,7 @@ def main(args, config):
     print("Creating vqa datasets")
     datasets = create_dataset('coco', config)
 
+    args.distributed = False
     if args.distributed:
         num_tasks = utils.get_world_size()
         global_rank = utils.get_rank()
@@ -199,7 +202,7 @@ def main(args, config):
 
     train_loader, val_loader, test_loader = create_loader(datasets,samplers,
                                               batch_size=[config['batch_size_train'],config['batch_size_test'], config['batch_size_test']],
-                                              num_workers=[8,8,8],is_trains=[True, False, False], 
+                                              num_workers=[1,1,1],is_trains=[True, False, False],
                                               collate_fns=[coco_collate_fn, coco_collate_fn, coco_collate_fn]) 
 
 
@@ -232,7 +235,7 @@ def main(args, config):
             state_dict = checkpoint['module']
 
         # reshape positional embedding to accomodate for image resolution change
-        if config["clip_name"] == "ViT-B-16":
+        if config["clip_name"] == "ViT-B/16":
             num_patches = int(config["image_res"] * config["image_res"]/(16*16))
         elif config["clip_name"] == "ViT-L-14":
             num_patches = int(config["image_res"] * config["image_res"]/(14*14))
@@ -268,7 +271,7 @@ def main(args, config):
     if utils.is_main_process():
         result = cal_metric(result_file)
     dist.barrier()
-    for epoch in range(start_epoch, max_epoch):
+    for epoch in tqdm(range(start_epoch, max_epoch)):
         if epoch > 0:
             lr_scheduler.step(epoch + warmup_steps)
 
@@ -354,5 +357,6 @@ if __name__ == '__main__':
 
 
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))
+    # print(config)
 
     main(args, config)

@@ -1,0 +1,12 @@
+ set CUDA_VISIBLE_DEVICES=0 & python -m torch.distributed.launch --nproc_per_node=4 --master_port=3224^
+ --use_env caption_mplug.py^
+ --config .\configs\caption_mplug_base.yaml^
+ --output_dir output\coco_caption_base^
+ --checkpoint .\mplug_base.pth^
+ --text_encoder bert-base-uncased^
+ --text_decoder bert-base-uncased^
+ --do_two_optim^
+ --lr 1e-5^
+ --min_length 8^
+ --max_length 25^
+ --max_input_length 25^

@@ -133,3 +133,10 @@ dmypy.json
 
 # PyCharm
 .idea/
+
+coco_2014/
+test2014.zip
+train2014.zip
+val2014.zip
+mPLUG/mplug_base.pth
+mPLUG/data

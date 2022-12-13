@@ -1168,9 +1168,9 @@ class BertModel(BertPreTrainedModel):
         # we need to make broadcastable to [batch_size, num_heads, seq_length, seq_length]
         if encoder_hidden_states is not None:
             if type(encoder_hidden_states) == list:
-                encoder_batch_size, encoder_sequence_length, _ = encoder_hidden_states[0].size()
+                encoder_batch_size, encoder_sequence_length = encoder_hidden_states[0].size()  #lk
             else:
-                encoder_batch_size, encoder_sequence_length, _ = encoder_hidden_states.size()
+                encoder_batch_size, encoder_sequence_length = encoder_hidden_states.size()  #lk
             encoder_hidden_shape = (encoder_batch_size, encoder_sequence_length)
             
             if type(encoder_attention_mask) == list:

@@ -27,18 +27,19 @@ class MPLUG(nn.Module):
             
         
     def forward(self, image, question, answer=None, train=True, out_size=5, scst=False):
+        print("Call mplug model")
         if(scst):
             return self.beam_search(image, question, answer, train=True,out_size=out_size)
-        image = image.to(dtype=next(self.parameters()).dtype) 
-        image_embeds = self.visual_encoder.visual(image, skip_last_layer=True, use_checkpoint=self.use_checkpoint)
+        image = image.to(dtype=torch.half)
+        image_embeds = self.visual_encoder.visual(image,)
         if self.large:
             image_embeds = self.dropout(self.visn_layer_norm(self.visn_fc(image_embeds)))
         image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device)
         
         if train:               
             answer_targets = answer.input_ids.masked_fill(answer.input_ids == self.tokenizer.pad_token_id, -100)      
-            
-            answer_output = self.text_decoder(answer.input_ids, 
+
+            answer_output = self.text_decoder(answer.input_ids,
                                                   attention_mask = answer.attention_mask, 
                                                   encoder_hidden_states = image_embeds,
                                                   encoder_attention_mask = image_atts,                  
@@ -52,7 +53,8 @@ class MPLUG(nn.Module):
             
 
         else: 
-            topk_ids, topk_probs = self.generation(image_embeds, image_atts) 
+            topk_ids, topk_probs = self.generation(image_embeds, image_atts)
+            print("Call mplug model success!")
             return topk_ids, topk_probs
  
 
