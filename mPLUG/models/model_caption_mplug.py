@@ -27,15 +27,17 @@ class MPLUG(nn.Module):
             
         
     def forward(self, image, question, answer=None, train=True, out_size=5, scst=False):
-        print("Call mplug model")
+
         if(scst):
             return self.beam_search(image, question, answer, train=True,out_size=out_size)
         image = image.to(dtype=torch.half)
         image_embeds = self.visual_encoder.visual(image,)
+        print(f"Image embedding size: {image_embeds.size()}")
         if self.large:
             image_embeds = self.dropout(self.visn_layer_norm(self.visn_fc(image_embeds)))
-        image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device)
-        
+
+        image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
+
         if train:               
             answer_targets = answer.input_ids.masked_fill(answer.input_ids == self.tokenizer.pad_token_id, -100)      
 
@@ -98,7 +100,9 @@ class MPLUG(nn.Module):
                 
     def generation(self, question_states, question_atts, out_size=1):
         encoder_inputs = [question_states, question_atts]
-        topk_ids,topk_probs = self.beam_generator.translate_batch_scst(encoder_inputs,out_size=out_size)  
+        print(f"Question_states Size: {question_states.size()}")
+        print(f"Question_atts Size: {question_atts.size()}")
+        topk_ids, topk_probs = self.beam_generator.translate_batch_scst(encoder_inputs,out_size=out_size)
         return topk_ids, topk_probs
 
     def rank_answer(self, question_states, question_atts, answer_ids, answer_atts, k):

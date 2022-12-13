@@ -1,5 +1,4 @@
-y
- --use_env caption_mplug.py^
+python caption_mplug.py^
  --config .\configs\caption_mplug_base.yaml^
  --output_dir output\coco_caption_base^
  --checkpoint .\mplug_base.pth^

@@ -151,12 +151,13 @@ class TextGenerator(object):
             input_ids = None
 
         device = src_features.device
-
+        print(f"Src features shape: {src_features.size()}")
         # Tile states and memory beam_size times.
         # dec_states.map_batch_fn(
         #     lambda state, dim: tile(state, beam_size, dim=dim))
         batch_size = src_features.size(0)
         src_features = tile(src_features, beam_size, dim=0)
+        print(f"Src features shape after tiling: {src_features.size()}")
         attention_mask = tile(padding_mask, beam_size, dim=0)
         #TODO support p_gen ...
         # if self.args.p_gen:
@@ -514,6 +515,6 @@ def tile(x, count, dim=0):
          .transpose(0, 1) \
          .contiguous() \
          .view(*out_size)
-    if dim != 0:
-        x = x.permute(perm).contiguous()
+    if dim != 0:()
+        x = x.permute(perm).contiguous
     return x

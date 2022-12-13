@@ -281,6 +281,8 @@ class BertSelfAttention(nn.Module):
 
 
         if is_cross_attention:
+            print(f"encoder_hidden_states:  {encoder_hidden_states.size()}")
+            print(f"encoder_attention_mask:  {encoder_attention_mask.size()}")
             key_layer = self.transpose_for_scores(self.key(encoder_hidden_states))
             value_layer = self.transpose_for_scores(self.value(encoder_hidden_states))
             attention_mask = encoder_attention_mask
@@ -1200,7 +1202,10 @@ class BertModel(BertPreTrainedModel):
             )
         else:
             embedding_output = encoder_embeds
-            
+
+        print(f"Bert Model Extending attention mask shape: {encoder_hidden_states.size()}")
+        print(f"Bert Model Extending attention mask shape: {encoder_attention_mask.size()}")
+
         encoder_outputs = self.encoder(
             embedding_output,
             attention_mask=extended_attention_mask,
